@@ -1,0 +1,112 @@
+.checkout-container {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: var(--space-2xl);
+  align-items: start;
+}
+
+.checkout-form-section, .checkout-summary-section {
+  background: var(--surface-card);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.checkout-summary-section h3 {
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--beige);
+  padding-bottom: var(--space-sm);
+}
+
+.checkout-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  font-size: 0.95rem;
+}
+
+.checkout-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--beige);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--gold-dark);
+}
+
+.pix-payment {
+  text-align: center;
+  padding: var(--space-xl) 0;
+}
+
+.pix-header h3 {
+  color: var(--green);
+  margin-bottom: var(--space-sm);
+}
+
+.pix-instructions {
+  text-align: left;
+  background: var(--surface-secondary);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  margin: var(--space-lg) 0;
+}
+
+.pix-instructions ol {
+  padding-left: var(--space-lg);
+}
+
+.pix-instructions li {
+  margin-bottom: var(--space-xs);
+}
+
+.pix-key-box {
+  background: var(--surface-card);
+  border: 2px dashed var(--gold);
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.pix-key-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin: var(--space-sm) 0;
+}
+
+.pix-key-display code {
+  font-size: 1.2rem;
+  font-weight: bold;
+  background: var(--beige);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.pix-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  background: rgba(212, 168, 75, 0.1);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  text-align: left;
+  margin-bottom: var(--space-xl);
+}
+
+.pix-warning-icon {
+  font-size: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .checkout-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .checkout-summary-section {
+    order: -1; /* Mostra o resumo antes no mobile */
+  }
+}
