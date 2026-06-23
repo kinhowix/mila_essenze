@@ -14,6 +14,7 @@ const ProductCard = ({ product }) => {
           src={product.image || 'https://via.placeholder.com/300'} 
           alt={product.name} 
           className="product-image"
+          referrerPolicy="no-referrer"
         />
         <div className="product-badge-overlay">
           <StockBadge stock={product.stock} />

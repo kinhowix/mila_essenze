@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ProductGrid from '../components/product/ProductGrid';
-
-const mockProducts = [
-  { id: 1, name: 'Essência de Canela', category: 'Essências', price: 25.00, stock: 10, description: 'Aroma quente e acolhedor, ideal para dias mais frios.', image: 'https://images.unsplash.com/photo-1608528577891-b20464f1cc88?w=400&q=80' },
-  { id: 2, name: 'Spray de Lavanda', category: 'Sprays', price: 35.00, stock: 5, description: 'Perfeito para borrifar nos lençóis antes de dormir e garantir uma noite relaxante.', image: 'https://images.unsplash.com/photo-1612441804231-77a36b284856?w=400&q=80' },
-  { id: 3, name: 'Kit Relaxamento', category: 'Kits', price: 85.00, stock: 0, description: 'Conjunto completo para um dia de spa em casa.', image: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=400&q=80' },
-  { id: 4, name: 'Difusor de Alecrim', category: 'Difusores', price: 45.00, stock: 2, description: 'Aroma fresco que estimula a concentração e a memória.', image: 'https://images.unsplash.com/photo-1595906231920-c205e4624424?w=400&q=80' }
-];
+import { getProducts } from '../services/productService';
 
 const HomePage = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProducts();
+  }, []);
+
   return (
     <div className="animate-fade-in-up">
       <section className="section" style={{ textAlign: 'center', backgroundColor: 'var(--surface-secondary)', padding: 'var(--space-4xl) 0' }}>
@@ -28,7 +39,11 @@ const HomePage = () => {
           <div className="section-divider"></div>
           <p>Essências, sprays e difusores selecionados com carinho.</p>
         </div>
-        <ProductGrid products={mockProducts} />
+        {loading ? (
+          <p style={{ textAlign: 'center', padding: '2rem' }}>Carregando produtos...</p>
+        ) : (
+          <ProductGrid products={products} />
+        )}
       </section>
     </div>
   );

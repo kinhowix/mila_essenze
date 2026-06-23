@@ -1,107 +1,64 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
-  where,
-  serverTimestamp,
-} from 'firebase/firestore';
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
-import { db, storage } from './firebase';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from 'firebase/firestore';
+import { db } from './firebase';
 
-const COLLECTION = 'products';
+const collectionName = 'products';
 
-// Get all products
-export async function getProducts() {
-  const q = query(collection(db, COLLECTION), orderBy('createdAt', 'desc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
-}
-
-// Get products by category
-export async function getProductsByCategory(category) {
-  const q = query(
-    collection(db, COLLECTION),
-    where('category', '==', category),
-    orderBy('createdAt', 'desc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
-}
-
-// Get single product
-export async function getProduct(id) {
-  const docRef = doc(db, COLLECTION, id);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() };
-  }
-  return null;
-}
-
-// Add product
-export async function addProduct(productData) {
-  const docRef = await addDoc(collection(db, COLLECTION), {
-    ...productData,
-    createdAt: serverTimestamp(),
-  });
-  return docRef.id;
-}
-
-// Update product
-export async function updateProduct(id, data) {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-// Delete product
-export async function deleteProduct(id) {
-  const docRef = doc(db, COLLECTION, id);
-  await deleteDoc(docRef);
-}
-
-// Update stock
-export async function updateStock(id, newStock) {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, { stock: newStock });
-}
-
-// Upload product image
-export async function uploadProductImage(file, productId) {
-  const storageRef = ref(
-    storage,
-    `products/${productId}/${Date.now()}_${file.name}`
-  );
-  const snapshot = await uploadBytes(storageRef, file);
-  const url = await getDownloadURL(snapshot.ref);
-  return url;
-}
-
-// Delete product image
-export async function deleteProductImage(imageUrl) {
+// Obter todos os produtos
+export const getProducts = async () => {
   try {
-    const imageRef = ref(storage, imageUrl);
-    await deleteObject(imageRef);
+    const q = query(collection(db, collectionName), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    const products = [];
+    querySnapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() });
+    });
+    return products;
   } catch (error) {
-    console.error('Error deleting image:', error);
+    console.error("Erro ao buscar produtos: ", error);
+    throw error;
   }
-}
+};
+
+// Adicionar um novo produto
+export const addProduct = async (productData) => {
+  try {
+    const docRef = await addDoc(collection(db, collectionName), {
+      ...productData,
+      createdAt: serverTimestamp(),
+      stock: Number(productData.stock),
+      price: Number(productData.price)
+    });
+    return { id: docRef.id, ...productData };
+  } catch (error) {
+    console.error("Erro ao adicionar produto: ", error);
+    throw error;
+  }
+};
+
+// Atualizar um produto existente
+export const updateProduct = async (id, updatedData) => {
+  try {
+    const productRef = doc(db, collectionName, id);
+    const dataToUpdate = { ...updatedData };
+    if (dataToUpdate.stock !== undefined) dataToUpdate.stock = Number(dataToUpdate.stock);
+    if (dataToUpdate.price !== undefined) dataToUpdate.price = Number(dataToUpdate.price);
+    
+    await updateDoc(productRef, dataToUpdate);
+    return true;
+  } catch (error) {
+    console.error("Erro ao atualizar produto: ", error);
+    throw error;
+  }
+};
+
+// Deletar um produto
+export const deleteProduct = async (id) => {
+  try {
+    const productRef = doc(db, collectionName, id);
+    await deleteDoc(productRef);
+    return true;
+  } catch (error) {
+    console.error("Erro ao deletar produto: ", error);
+    throw error;
+  }
+};
