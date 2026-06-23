@@ -1,13 +1,16 @@
 import React from 'react';
 import { getWhatsAppLink, generateWhatsAppMessage } from '../../utils/whatsapp';
 
-const PixPayment = ({ orderData, cartItems, cartTotal }) => {
+const PixPayment = ({ orderData, cartItems, cartTotal, onOrderSubmit, isSubmitting, orderError }) => {
   // Dados reais da loja
   const pixKey = "camila@oticasparisssul.com.br"; 
   const pixName = "Camila Boursheid Pessalli de Oliveira";
   const storePhone = "5551992653899";
 
-  const handleWhatsAppRedirect = () => {
+  const handleWhatsAppRedirect = async () => {
+    const created = await onOrderSubmit?.();
+    if (!created) return;
+
     const message = generateWhatsAppMessage(orderData, cartItems, cartTotal);
     const link = getWhatsAppLink(storePhone, message);
     window.open(link, '_blank');
@@ -53,9 +56,10 @@ const PixPayment = ({ orderData, cartItems, cartTotal }) => {
         </p>
       </div>
 
-      <button className="btn btn-whatsapp btn-lg" onClick={handleWhatsAppRedirect}>
-        📱 Enviar Comprovante no WhatsApp
+      <button className="btn btn-whatsapp btn-lg" onClick={handleWhatsAppRedirect} disabled={isSubmitting}>
+        {isSubmitting ? 'Enviando pedido...' : '📱 Enviar Comprovante no WhatsApp'}
       </button>
+      {orderError && <p className="error-message" style={{ color: 'var(--red)', marginTop: '1rem' }}>{orderError}</p>}
     </div>
   );
 };

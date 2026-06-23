@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import PixPayment from '../components/checkout/PixPayment';
+import { createOrder } from '../services/orderService';
 import '../components/checkout/checkout.css';
 
 const CheckoutPage = () => {
@@ -9,6 +10,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   
   const [step, setStep] = useState(1); // 1: Form, 2: PIX
+  const [orderSent, setOrderSent] = useState(false);
   const [orderData, setOrderData] = useState({
     customerName: '',
     customerPhone: '',
@@ -51,6 +53,61 @@ const CheckoutPage = () => {
     e.preventDefault();
     setStep(2);
   };
+
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [orderError, setOrderError] = useState(null);
+
+  const handleCreateOrder = async () => {
+    setOrderError(null);
+    if (cartItems.length === 0) {
+      setOrderError('O carrinho está vazio. Adicione produtos antes de enviar o pedido.');
+      return false;
+    }
+
+    const orderPayload = {
+      customerName: orderData.customerName,
+      customerPhone: orderData.customerPhone,
+      deliveryMethod: orderData.deliveryMethod,
+      address: orderData.deliveryMethod === 'delivery' ? orderData.address : null,
+      items: cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      total: cartTotal,
+      status: 'pending',
+    };
+
+    try {
+      setIsSubmittingOrder(true);
+      await createOrder(orderPayload);
+      clearCart();
+      setOrderSent(true);
+      return true;
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+      setOrderError('Não foi possível registrar o pedido. Tente novamente.');
+      return false;
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
+  if (orderSent) {
+    return (
+      <div className="container section animate-fade-in">
+        <div className="empty-state">
+          <div className="empty-state-icon">✅</div>
+          <h3>Pedido enviado!</h3>
+          <p>O comprovante foi aberto no WhatsApp e o carrinho foi limpo.</p>
+          <button className="btn btn-primary" onClick={() => navigate('/produtos')}>
+            Continuar comprando
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container section animate-fade-in">
@@ -129,7 +186,14 @@ const CheckoutPage = () => {
           </form>
         ) : (
           <div className="checkout-form-section">
-            <PixPayment orderData={orderData} cartItems={cartItems} cartTotal={cartTotal} />
+            <PixPayment
+              orderData={orderData}
+              cartItems={cartItems}
+              cartTotal={cartTotal}
+              onOrderSubmit={handleCreateOrder}
+              isSubmitting={isSubmittingOrder}
+              orderError={orderError}
+            />
             <button className="btn btn-secondary btn-sm" onClick={() => setStep(1)} style={{ marginTop: 'var(--space-lg)', width: '100%' }}>
               Voltar para os dados
             </button>
