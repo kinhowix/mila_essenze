@@ -154,7 +154,7 @@ const ProductManager = () => {
                   )}
                   <small style={{ color: 'var(--brown-light)', fontSize: '0.8rem' }}>
                     Use o link direto da imagem (ex: <code>https://i.ibb.co/xyz/nome.jpg</code>).<br />
-                    No ImgBB: clique na imagem > "Embed codes" > "Direct link". Não use o link da página.
+                    No ImgBB: clique na imagem &gt; "Embed codes" &gt; "Direct link". Não use o link da página.
                   </small>
                 </div>
 
