@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, updateOrderStatus } from '../../services/orderService';
+import { getOrders, updateOrderStatus, updateProofStatus, confirmOrderAndDecrement } from '../../services/orderService';
 
 const statusMap = {
   pending: 'Pendente',
   confirmed: 'Confirmado',
   cancelled: 'Cancelado',
+};
+
+const formatDate = (timestamp) => {
+  if (!timestamp) return 'N/A';
+  const date = timestamp?.toDate?.() || new Date(timestamp);
+  return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 };
 
 const OrderManager = () => {
@@ -28,10 +34,30 @@ const OrderManager = () => {
 
   const handleStatus = async (id, status) => {
     try {
-      await updateOrderStatus(id, status);
+      if (status === 'confirmed') {
+        // Get the order to access items
+        const order = orders.find(o => o.id === id);
+        if (order && order.items && order.items.length > 0) {
+          // Call the function that confirms and decrements stock
+          await confirmOrderAndDecrement(id, order.items);
+        } else {
+          await updateOrderStatus(id, status);
+        }
+      } else {
+        await updateOrderStatus(id, status);
+      }
       await loadOrders();
     } catch (error) {
       console.error('Erro ao atualizar pedido:', error);
+    }
+  };
+
+  const handleProofStatus = async (id, received) => {
+    try {
+      await updateProofStatus(id, received);
+      await loadOrders();
+    } catch (error) {
+      console.error('Erro ao atualizar comprovante:', error);
     }
   };
 
@@ -48,16 +74,35 @@ const OrderManager = () => {
       <div className="admin-list">
         {orders.map(order => (
           <div key={order.id} className="admin-list-item">
-            <div>
+            <div style={{ flex: 1 }}>
               <strong>Pedido {order.orderNumber}</strong> — {order.customerName}
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--brown-light)' }}>
+              <p style={{ margin: '4px 0', fontSize: '0.85rem', color: 'var(--brown-light)' }}>
                 Total: R$ {Number(order.total || 0).toFixed(2)} — Status:{' '}
                 <span style={{ color: 'var(--gold-dark)', fontWeight: 'bold' }}>
                   {statusMap[order.status] || order.status}
                 </span>
               </p>
+              <p style={{ margin: '4px 0', fontSize: '0.8rem', color: '#999' }}>
+                Comprovante: {order.comprovanteEnviado ? '✅ Enviado' : '❌ Não enviado'}
+                {order.dataComprovanteEnviado && ` em ${formatDate(order.dataComprovanteEnviado)}`}
+              </p>
+              {order.comprovanteEnviado && (
+                <p style={{ margin: '4px 0', fontSize: '0.8rem', color: '#999' }}>
+                  Recebido: {order.comprovanteRecebido ? '✅ Sim' : '⏳ Aguardando confirmação'}
+                  {order.dataComprovanteRecebido && ` em ${formatDate(order.dataComprovanteRecebido)}`}
+                </p>
+              )}
             </div>
             <div>
+              {order.comprovanteEnviado && !order.comprovanteRecebido && (
+                <button
+                  className="btn btn-info btn-sm"
+                  style={{ backgroundColor: 'var(--blue)', color: 'white', marginRight: '8px' }}
+                  onClick={() => handleProofStatus(order.id, true)}
+                >
+                  ✓ Comprovante OK
+                </button>
+              )}
               <button
                 className="btn btn-success btn-sm"
                 style={{ backgroundColor: 'var(--green)', color: 'white', marginRight: '8px' }}

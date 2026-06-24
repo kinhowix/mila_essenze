@@ -1,18 +1,23 @@
 import React from 'react';
 import { getWhatsAppLink, generateWhatsAppMessage } from '../../utils/whatsapp';
 
-const PixPayment = ({ orderData, cartItems, cartTotal, onOrderSubmit, isSubmitting, orderError }) => {
+const PixPayment = ({ orderData, cartItems, cartTotal, onOrderSubmit, onProofSent, isSubmitting, orderError }) => {
   // Dados reais da loja
   const pixKey = "camila@oticasparisssul.com.br"; 
   const pixName = "Camila Boursheid Pessalli de Oliveira";
   const storePhone = "5551992653899";
 
   const handleWhatsAppRedirect = async () => {
-    const created = await onOrderSubmit?.();
-    if (!created) return;
+    const orderId = await onOrderSubmit?.();
+    if (!orderId) return;
 
     const message = generateWhatsAppMessage(orderData, cartItems, cartTotal);
     const link = getWhatsAppLink(storePhone, message);
+    
+    if (typeof onProofSent === 'function') {
+      await onProofSent(orderId);
+    }
+    
     window.open(link, '_blank');
   };
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import PixPayment from '../components/checkout/PixPayment';
-import { createOrder } from '../services/orderService';
+import { createOrder, markProofSent } from '../services/orderService';
 import '../components/checkout/checkout.css';
 
 const CheckoutPage = () => {
@@ -56,6 +56,7 @@ const CheckoutPage = () => {
 
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState(null);
+  const [currentOrderId, setCurrentOrderId] = useState(null);
 
   const handleCreateOrder = async () => {
     setOrderError(null);
@@ -74,6 +75,7 @@ const CheckoutPage = () => {
         name: item.name,
         price: item.price,
         quantity: item.quantity,
+        currentStock: item.stock,
       })),
       total: cartTotal,
       status: 'pending',
@@ -81,14 +83,13 @@ const CheckoutPage = () => {
 
     try {
       setIsSubmittingOrder(true);
-      await createOrder(orderPayload);
-      clearCart();
-      setOrderSent(true);
-      return true;
+      const result = await createOrder(orderPayload);
+      setCurrentOrderId(result.id);
+      return result.id;
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
       setOrderError('Não foi possível registrar o pedido. Tente novamente.');
-      return false;
+      return null;
     } finally {
       setIsSubmittingOrder(false);
     }
@@ -191,6 +192,11 @@ const CheckoutPage = () => {
               cartItems={cartItems}
               cartTotal={cartTotal}
               onOrderSubmit={handleCreateOrder}
+              onProofSent={async (orderId) => {
+                await markProofSent(orderId);
+                clearCart();
+                setOrderSent(true);
+              }}
               isSubmitting={isSubmittingOrder}
               orderError={orderError}
             />
