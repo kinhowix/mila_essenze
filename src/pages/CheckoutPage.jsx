@@ -14,7 +14,7 @@ const CheckoutPage = () => {
   const [orderData, setOrderData] = useState({
     customerName: '',
     customerPhone: '',
-    deliveryMethod: 'pickup', // 'pickup' ou 'delivery'
+    deliveryMethod: 'whatsapp',
     address: {
       street: '',
       number: '',
@@ -68,8 +68,8 @@ const CheckoutPage = () => {
     const orderPayload = {
       customerName: orderData.customerName,
       customerPhone: orderData.customerPhone,
-      deliveryMethod: orderData.deliveryMethod,
-      address: orderData.deliveryMethod === 'delivery' ? orderData.address : null,
+      deliveryMethod: 'whatsapp',
+      address: null,
       items: cartItems.map(item => ({
         id: item.id,
         name: item.name,
@@ -147,39 +147,11 @@ const CheckoutPage = () => {
 
             <h3 style={{ marginTop: 'var(--space-xl)' }}>Entrega</h3>
             <div className="form-group">
-              <select 
-                className="form-input" 
-                name="deliveryMethod" 
-                value={orderData.deliveryMethod} 
-                onChange={handleInputChange}
-              >
-                <option value="pickup">Retirar Pessoalmente</option>
-                <option value="delivery">Entrega no meu Endereço</option>
-              </select>
+              <p style={{ margin: 0, padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px', fontSize: '0.95rem', color: '#333' }}>
+                ✓ Combinar retirada pelo WhatsApp
+              </p>
             </div>
 
-            {orderData.deliveryMethod === 'delivery' && (
-              <div className="address-fields animate-fade-in">
-                <div className="form-group">
-                  <label className="form-label">Rua</label>
-                  <input type="text" className="form-input" name="address.street" value={orderData.address.street} onChange={handleInputChange} required />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'var(--space-md)' }}>
-                  <div className="form-group">
-                    <label className="form-label">Número</label>
-                    <input type="text" className="form-input" name="address.number" value={orderData.address.number} onChange={handleInputChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Bairro</label>
-                    <input type="text" className="form-input" name="address.neighborhood" value={orderData.address.neighborhood} onChange={handleInputChange} required />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Cidade</label>
-                  <input type="text" className="form-input" name="address.city" value={orderData.address.city} onChange={handleInputChange} required />
-                </div>
-              </div>
-            )}
 
             <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 'var(--space-md)' }}>
               Ir para Pagamento

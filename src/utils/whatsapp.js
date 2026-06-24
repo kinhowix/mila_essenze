@@ -12,10 +12,7 @@ export const generateWhatsAppMessage = (orderData, cartItems, cartTotal) => {
   
   message += `\n*Total do Pedido: R$ ${cartTotal.toFixed(2)}*\n\n`;
   
-  message += `*Entrega:* ${deliveryMethod === 'pickup' ? 'Retirada' : 'Entrega no endereço'}\n`;
-  if (deliveryMethod === 'delivery' && address) {
-    message += `*Endereço:* ${address.street}, ${address.number} - ${address.neighborhood}, ${address.city}\n`;
-  }
+  message += `*Entrega:* Retirada pelo WhatsApp\n`;
   
   message += `\nSegue meu comprovante PIX abaixo.`;
   
