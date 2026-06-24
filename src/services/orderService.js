@@ -4,6 +4,7 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  deleteDoc,
   query,
   orderBy,
   serverTimestamp,
@@ -70,6 +71,12 @@ export async function updateProofStatus(id, received) {
     comprovanteRecebido: received,
     dataComprovanteRecebido: received ? serverTimestamp() : null,
   });
+}
+
+// Delete an order
+export async function deleteOrder(id) {
+  const orderRef = doc(db, COLLECTION, id);
+  await deleteDoc(orderRef);
 }
 
 // Decrement product stock when order is confirmed

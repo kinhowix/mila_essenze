@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, updateOrderStatus, updateProofStatus, confirmOrderAndDecrement } from '../../services/orderService';
+import { getOrders, updateOrderStatus, updateProofStatus, confirmOrderAndDecrement, deleteOrder } from '../../services/orderService';
 
 const statusMap = {
   pending: 'Pendente',
@@ -61,6 +61,17 @@ const OrderManager = () => {
     }
   };
 
+  const handleDeleteOrder = async (id) => {
+    const confirmed = window.confirm('Deseja realmente excluir este pedido? Esta ação não pode ser desfeita.');
+    if (!confirmed) return;
+    try {
+      await deleteOrder(id);
+      await loadOrders();
+    } catch (error) {
+      console.error('Erro ao excluir pedido:', error);
+    }
+  };
+
   if (loading) {
     return <p style={{ textAlign: 'center', padding: '2rem' }}>Carregando pedidos...</p>;
   }
@@ -115,8 +126,15 @@ const OrderManager = () => {
                 className="btn btn-danger btn-sm"
                 onClick={() => handleStatus(order.id, 'cancelled')}
                 disabled={order.status !== 'pending'}
+                style={{ marginRight: '8px' }}
               >
                 Cancelar
+              </button>
+              <button
+                className="btn btn-outline-danger btn-sm"
+                onClick={() => handleDeleteOrder(order.id)}
+              >
+                Excluir
               </button>
             </div>
           </div>
