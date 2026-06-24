@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import PixPayment from '../components/checkout/PixPayment';
+import { createOrder, markProofSent } from '../services/orderService';
 import '../components/checkout/checkout.css';
 
 const CheckoutPage = () => {
@@ -9,10 +10,11 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   
   const [step, setStep] = useState(1); // 1: Form, 2: PIX
+  const [orderSent, setOrderSent] = useState(false);
   const [orderData, setOrderData] = useState({
     customerName: '',
     customerPhone: '',
-    deliveryMethod: 'pickup', // 'pickup' ou 'delivery'
+    deliveryMethod: 'whatsapp',
     address: {
       street: '',
       number: '',
@@ -52,6 +54,62 @@ const CheckoutPage = () => {
     setStep(2);
   };
 
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [orderError, setOrderError] = useState(null);
+  const [currentOrderId, setCurrentOrderId] = useState(null);
+
+  const handleCreateOrder = async () => {
+    setOrderError(null);
+    if (cartItems.length === 0) {
+      setOrderError('O carrinho está vazio. Adicione produtos antes de enviar o pedido.');
+      return false;
+    }
+
+    const orderPayload = {
+      customerName: orderData.customerName,
+      customerPhone: orderData.customerPhone,
+      deliveryMethod: 'whatsapp',
+      address: null,
+      items: cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        currentStock: item.stock,
+      })),
+      total: cartTotal,
+      status: 'pending',
+    };
+
+    try {
+      setIsSubmittingOrder(true);
+      const result = await createOrder(orderPayload);
+      setCurrentOrderId(result.id);
+      return result.id;
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+      setOrderError('Não foi possível registrar o pedido. Tente novamente.');
+      return null;
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
+  if (orderSent) {
+    return (
+      <div className="container section animate-fade-in">
+        <div className="empty-state">
+          <div className="empty-state-icon">✅</div>
+          <h3>Pedido enviado!</h3>
+          <p>O comprovante foi aberto no WhatsApp e o carrinho foi limpo.</p>
+          <button className="btn btn-primary" onClick={() => navigate('/produtos')}>
+            Continuar comprando
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container section animate-fade-in">
       <div className="section-header">
@@ -89,39 +147,11 @@ const CheckoutPage = () => {
 
             <h3 style={{ marginTop: 'var(--space-xl)' }}>Entrega</h3>
             <div className="form-group">
-              <select 
-                className="form-input" 
-                name="deliveryMethod" 
-                value={orderData.deliveryMethod} 
-                onChange={handleInputChange}
-              >
-                <option value="pickup">Retirar Pessoalmente</option>
-                <option value="delivery">Entrega no meu Endereço</option>
-              </select>
+              <p style={{ margin: 0, padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '4px', fontSize: '0.95rem', color: '#333' }}>
+                ✓ Combinar retirada pelo WhatsApp
+              </p>
             </div>
 
-            {orderData.deliveryMethod === 'delivery' && (
-              <div className="address-fields animate-fade-in">
-                <div className="form-group">
-                  <label className="form-label">Rua</label>
-                  <input type="text" className="form-input" name="address.street" value={orderData.address.street} onChange={handleInputChange} required />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'var(--space-md)' }}>
-                  <div className="form-group">
-                    <label className="form-label">Número</label>
-                    <input type="text" className="form-input" name="address.number" value={orderData.address.number} onChange={handleInputChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Bairro</label>
-                    <input type="text" className="form-input" name="address.neighborhood" value={orderData.address.neighborhood} onChange={handleInputChange} required />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Cidade</label>
-                  <input type="text" className="form-input" name="address.city" value={orderData.address.city} onChange={handleInputChange} required />
-                </div>
-              </div>
-            )}
 
             <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: 'var(--space-md)' }}>
               Ir para Pagamento
@@ -129,7 +159,19 @@ const CheckoutPage = () => {
           </form>
         ) : (
           <div className="checkout-form-section">
-            <PixPayment orderData={orderData} cartItems={cartItems} cartTotal={cartTotal} />
+            <PixPayment
+              orderData={orderData}
+              cartItems={cartItems}
+              cartTotal={cartTotal}
+              onOrderSubmit={handleCreateOrder}
+              onProofSent={async (orderId) => {
+                await markProofSent(orderId);
+                clearCart();
+                setOrderSent(true);
+              }}
+              isSubmitting={isSubmittingOrder}
+              orderError={orderError}
+            />
             <button className="btn btn-secondary btn-sm" onClick={() => setStep(1)} style={{ marginTop: 'var(--space-lg)', width: '100%' }}>
               Voltar para os dados
             </button>
